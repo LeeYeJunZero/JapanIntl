@@ -1,0 +1,9 @@
+{
+  "name": "japan-interschool",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "재팬 인터스쿨 — 일본 국제학교 전문 안내 (정적 사이트)",
+  "engines": { "node": ">=22" },
+  "scripts": { "build": "node scripts/build.js", "test": "node --test test/build.test.js" }
+}
