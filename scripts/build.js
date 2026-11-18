@@ -1,14 +1,18 @@
-import { mkdirSync, writeFileSync, rmSync, readdirSync, copyFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, rmSync, readdirSync, copyFileSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schools, categories, regions, curricula, tags } from '../src/data.js';
 import { guides } from '../src/guides.js';
 
-const BRAND = '재팬 인터스쿨';
-const SITE_URL = 'https://leeyejunzero.github.io/JapanIntl/';
-const PHONE = '010-2224-2123';
-
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const CFG = JSON.parse(readFileSync(join(ROOT, 'site.config.json'), 'utf8'));
+const BRAND = '재팬 인터스쿨';
+const SITE_URL = CFG.customDomain ? `https://${CFG.customDomain}/` : 'https://leeyejunzero.github.io/JapanIntl/';
+const PHONE = '010-2224-2123';
+const V = CFG.verification || {};
+const VERIFY = [['google-site-verification', V.google], ['naver-site-verification', V.naver], ['msvalidate.01', V.bing]]
+  .filter(([, c]) => c).map(([n, c]) => `<meta name="${n}" content="${String(c).replace(/[^\w-]/g, '')}">`).join('');
+
 const OUT = join(ROOT, 'dist');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const by = (list) => Object.fromEntries(list.map((x) => [x.slug, x]));
@@ -22,6 +26,7 @@ function page(path, { title, desc, body, crumbs = [], jsonld }) {
   const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} | ${BRAND}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${SITE_URL}${path}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:type" content="website">
+<meta property="og:url" content="${SITE_URL}${path}"><meta property="og:site_name" content="${BRAND}"><meta property="og:locale" content="ko_KR">${path ? '' : VERIFY}
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;800&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${r}assets/site.css">${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(/</g, '\\u003c')}</script>` : ''}</head>
@@ -185,6 +190,10 @@ page('contact/', { title: '입학·학습 상담', desc: '일본 국제학교 �
 
 // 404 + sitemap (404 uses absolute base since GitHub Pages serves it at any depth)
 writeFileSync(join(OUT, '404.html'), `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>페이지 없음 | ${BRAND}</title><link rel="stylesheet" href="${SITE_URL}assets/site.css"></head><body><main class="wrap">${head('404', '페이지를 찾을 수 없습니다', null)}<p><a class="btn" href="${SITE_URL}">홈으로</a> <a class="btn ghost" href="${SITE_URL}schools/">학교 전체 보기</a></p></main></body></html>`);
-writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages.map((p) => `<url><loc>${SITE_URL}${p}</loc></url>`).join('')}</urlset>\n`);
+const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+writeFileSync(join(OUT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${pages.map((p) => `<url><loc>${SITE_URL}${p}</loc><lastmod>${today}</lastmod></url>`).join('')}</urlset>\n`);
+if (CFG.customDomain) writeFileSync(join(OUT, 'CNAME'), `${CFG.customDomain}\n`);
+// HTML-file ownership checks: { "google1234.html": "file body" }
+for (const [name, text] of Object.entries(CFG.verificationFiles || {})) if (/^[\w.-]+\.html$/.test(name)) writeFileSync(join(OUT, name), text);
 writeFileSync(join(OUT, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${SITE_URL}sitemap.xml\n`);
 console.log(`built ${pages.length} pages`);
