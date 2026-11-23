@@ -120,7 +120,7 @@ const rows = [
   ['bst', '브리티시 스쿨 인 도쿄', 'The British School in Tokyo', 'BST', 'tokyo', '시부야/아자부', 'hybrid', '영국식(IGCSE) → IB DP', ['british', 'igcse', 'ib-dp'], '일본 최대 영국식 국제학교', []],
   ['st-marys', '세인트 메리스 국제학교', "St. Mary's International School", 'SMIS', 'tokyo', '세타가야', 'hybrid', '미국식 → IB DP', ['american', 'ib-dp'], '도쿄 Big 4 명문 남학교', ['boys']],
   ['canadian-academy', '캐나디언 아카데미', 'Canadian Academy', 'CA', 'hyogo', '고베', 'hybrid', '미국·캐나다식 → IB DP', ['american', 'canadian', 'ib-dp'], '1913년 설립, 기숙사 운영 간사이 명문', ['boarding', 'historic']],
-  ['cist', '캐나디언 국제학교 도쿄', 'Canadian International School Tokyo', 'CIS', 'tokyo', '시나가와', 'hybrid', '캐나다식(PEI) → IB DP', ['canadian', 'ib-dp'], '통합형 EAL 운영, 북미 학점 연계', ['eal']],
+  ['cist', '캐나디언 국제학교 도쿄', 'Canadian International School Tokyo', 'CIS', 'tokyo', '시나가와', 'american-ap', '캐나다식(PEI) + IB PYP + AP', ['canadian', 'ib-pyp', 'ap'], '캐나다 PEI 졸업장, 통합형 EAL, 북미 학점 연계', ['eal']],
   ['saint-maur', '생 모르 국제학교', 'Saint Maur International School', 'SMIS', 'kanagawa', '요코하마', 'hybrid', '미국·영국식(IGCSE) → IB DP / AP', ['american', 'british', 'igcse', 'ib-dp', 'ap'], '1872년 설립 아시아 최고(最古) 국제학교, IB·AP 병행', ['historic']],
   ['sacred-heart', '성심 국제학교', 'International School of the Sacred Heart', 'ISSH', 'tokyo', '시부야', 'hybrid', '미국식 → IB DP / AP', ['american', 'ib-dp', 'ap'], '전통 가톨릭 여학교, IB·AP 선택 가능', ['girls', 'religious']],
 

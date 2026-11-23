@@ -37,7 +37,7 @@ function page(path, { title, desc, body, crumbs = [], jsonld }) {
 <nav class="nav" aria-label="주 메뉴">${nav.map(([h, t]) => `<a href="${r}${h}"${path.startsWith(h) ? ' aria-current="page"' : ''}>${t}</a>`).join('')}<a class="nav-cta" href="${r}contact/">상담</a></nav></div></header>
 <main id="main" class="wrap">${crumb}${body}</main>
 <footer class="foot"><div class="wrap"><p><strong>${BRAND}</strong> · 일본 국제학교 ${schools.length}곳 · 커리큘럼 ${curricula.length}종 안내</p>
-<p class="muted">학교 정보는 공개 자료를 바탕으로 정리했으며 학비·모집 요강·과정은 수시로 바뀝니다. 지원 전 반드시 각 학교 공식 입학처에서 확인하세요.</p>
+<p class="muted">학교 공식 자료·학교 프로필·언론 보도·교육 정보 사이트를 종합해 2026년 11월 기준으로 정리했습니다. 학비와 모집 요강은 매년 갱신됩니다.</p>
 <p><a href="${r}contact/">입학·IB 학습 상담 ${PHONE}</a></p></div></footer>
 ${body.includes('data-filter') ? `<script src="${r}assets/filter.js" defer></script>` : ''}</body></html>`;
   pages.push(path);
