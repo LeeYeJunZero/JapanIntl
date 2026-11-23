@@ -49,3 +49,18 @@ test('every school has researched details', async () => {
   assert.deepEqual(Object.keys(details).sort(), schools.map((s) => s.slug).sort());
   for (const c of curricula) assert.ok(curriculumMore[c.slug]?.length >= 4, `thin curriculum: ${c.slug}`);
 });
+
+test('profiles are detailed and matching is sane', async () => {
+  const { profiles } = await import('../src/profiles.js');
+  const { similarity } = await import('../src/match.js');
+  const area = Object.fromEntries(regions.map((g) => [g.slug, g.area]));
+  for (const s of schools) {
+    const p = profiles[s.slug];
+    assert.ok(p?.vision && p.stages.length >= 2 && p.fee.length === 2 && p.g.length === 2, `profile: ${s.slug}`);
+    for (const x of p.stages) assert.ok(x.subjects.length >= 3 && x.learn && x.goal, `stage: ${s.slug} ${x.name}`);
+  }
+  const by = (k) => schools.find((s) => s.slug === k);
+  const sim = (a, b) => similarity(by(a), by(b), profiles[a], profiles[b], area).score;
+  assert.ok(sim('okis', 'kenkoku') > sim('okis', 'harrow-appi'), 'Korean schools should match each other');
+  assert.ok(sim('harrow-appi', 'rugby-japan') > sim('harrow-appi', 'okis'));
+});

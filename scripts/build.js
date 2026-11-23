@@ -5,6 +5,8 @@ import { schools, categories, regions, curricula, tags } from '../src/data.js';
 import { guides } from '../src/guides.js';
 import { details } from '../src/details.js';
 import { curriculumMore } from '../src/curriculum-more.js';
+import { profiles } from '../src/profiles.js';
+import { topMatches } from '../src/match.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CFG = JSON.parse(readFileSync(join(ROOT, 'site.config.json'), 'utf8'));
@@ -19,11 +21,12 @@ const OUT = join(ROOT, 'dist');
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const by = (list) => Object.fromEntries(list.map((x) => [x.slug, x]));
 const CAT = by(categories), REG = by(regions), CUR = by(curricula), TAG = by(tags);
+const AREA = Object.fromEntries(regions.map((g) => [g.slug, g.area]));
 
 const pages = [];
 function page(path, { title, desc, body, crumbs = [], jsonld }) {
   const r = '../'.repeat(path.split('/').filter(Boolean).length);
-  const nav = [['schools/', '학교 전체'], ['category/', '분류'], ['region/', '지역'], ['curriculum/', '커리큘럼'], ['tags/', '특징'], ['guides/', '가이드']];
+  const nav = [['match/', '학교 매칭'], ['schools/', '학교 전체'], ['category/', '분류'], ['region/', '지역'], ['curriculum/', '커리큘럼'], ['tags/', '특징'], ['guides/', '가이드']];
   const crumb = crumbs.length ? `<nav class="crumbs" aria-label="현재 위치"><a href="${r}">홈</a>${crumbs.map(([h, t]) => h ? ` / <a href="${r}${h}">${esc(t)}</a>` : ` / <span>${esc(t)}</span>`).join('')}</nav>` : '';
   const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)} | ${BRAND}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${SITE_URL}${path}">
@@ -39,7 +42,7 @@ function page(path, { title, desc, body, crumbs = [], jsonld }) {
 <footer class="foot"><div class="wrap"><p><strong>${BRAND}</strong> · 일본 국제학교 ${schools.length}곳 · 커리큘럼 ${curricula.length}종 안내</p>
 <p class="muted">학교 공식 자료·학교 프로필·언론 보도·교육 정보 사이트를 종합해 2026년 11월 기준으로 정리했습니다. 학비와 모집 요강은 매년 갱신됩니다.</p>
 <p><a href="${r}contact/">입학·IB 학습 상담 ${PHONE}</a></p></div></footer>
-${body.includes('data-filter') ? `<script src="${r}assets/filter.js" defer></script>` : ''}</body></html>`;
+${body.includes('data-filter') ? `<script src="${r}assets/filter.js" defer></script>` : ''}${body.includes('data-match') ? `<script src="${r}assets/match.js" defer></script>` : ''}</body></html>`;
   pages.push(path);
   const file = join(OUT, path, 'index.html');
   mkdirSync(dirname(file), { recursive: true });
@@ -104,13 +107,18 @@ const moreList = (k) => (curriculumMore[k] || []).map(([h, p]) => `<div><dt>${es
 const row = (k, v) => v ? `<tr><th scope="row">${esc(k)}</th><td>${esc(v)}</td></tr>` : '';
 function schoolDetail(s, r, q) {
   const d = details[s.slug] || {};
+  const pf = profiles[s.slug];
   const boarding = s.tags.includes('boarding');
   const ul = (list) => `<ul class="check">${list.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
   return `<section><h2 class="sec">학교 기본 정보</h2><div class="table-wrap"><table class="info"><tbody>
 ${row('설립', d.founded)}${row('운영 학년', d.grades)}${row('규모', d.size)}${row('운영 과정', s.program)}${row('연간 학비', d.tuition)}${row('시험 성적', d.results)}
 ${d.site ? `<tr><th scope="row">공식 사이트</th><td><a href="${esc(d.site)}" rel="noopener" target="_blank">${esc(d.site.replace(/^https?:\/\//, '').replace(/\/$/, ''))} ↗</a></td></tr>` : ''}
 </tbody></table></div></section>
-${d.levels ? `<section><h2 class="sec">학년별 커리큘럼</h2><ol class="levels">${d.levels.map(([h, p]) => `<li><strong>${esc(h)}</strong><p>${esc(p)}</p></li>`).join('')}</ol></section>` : ''}
+${pf.vision ? `<section class="vision"><p class="kicker">교육 비전</p><blockquote>${esc(pf.vision)}</blockquote><p class="chips">${pf.langs.map((l) => `<span class="chip">${esc(l)}</span>`).join('')}<span class="muted"> 가르치는 언어</span></p></section>` : ''}
+<section><h2 class="sec">학년별 커리큘럼</h2><div class="stages">${pf.stages.map((x) => `<article class="stage"><header><h3>${esc(x.name)}</h3><span class="grade">${esc(x.grades)}</span><span class="prog">${esc(x.program)}</span></header>
+<h4>배우는 과목</h4><ul class="subj">${x.subjects.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+<h4>수업 방식 · 내용</h4><p>${esc(x.learn)}</p><h4>이 단계의 목표</h4><p class="goal">${esc(x.goal)}</p></article>`).join('')}</div></section>
+${d.levels ? `<section><h2 class="sec">이 학교만의 운영 포인트</h2><ol class="levels">${d.levels.map(([h, p]) => `<li><strong>${esc(h)}</strong><p>${esc(p)}</p></li>`).join('')}</ol></section>` : ''}
 <section><h2 class="sec">운영 커리큘럼 상세</h2><div class="curr-list">${s.curr.map((k, i) => { const u = CUR[k]; return `<details class="curr"${i ? '' : ' open'}><summary><h3><a href="${r}curriculum/${k}/">${esc(u.name)}</a> <span class="muted">${esc(u.full)} · ${esc(u.age)}</span></h3></summary>${u.about.map((p) => `<p>${esc(p)}</p>`).join('')}<dl class="more">${moreList(k)}</dl></details>`; }).join('')}</div></section>
 <section><h2 class="sec">입학 · 지원 상세</h2><div class="apply">
 <div><h3>모집 · 입학 평가</h3>${ul(d.admission || ['모집 학년·일정은 학교 입학처에 확인하세요.'])}</div>
@@ -134,8 +142,6 @@ for (const s of schools) {
   const path = `schools/${s.slug}/`, r = R(path), c = CAT[s.cat], g = REG[s.region];
   const others = (f) => schools.filter((x) => x.slug !== s.slug && f(x));
   const sameRegion = others((x) => x.region === s.region);
-  const sameCat = others((x) => x.cat === s.cat && x.region !== s.region).slice(0, 6);
-  const sameCurr = others((x) => x.cat !== s.cat && x.curr.some((k) => s.curr.includes(k))).slice(0, 6);
   const q = encodeURIComponent(`${s.en} official site admissions`);
   page(path, {
     title: `${s.ko} (${s.en}) — ${s.program}`, desc: `${s.ko}(${s.abbr}) · ${g.name} ${s.area} · ${s.program}. ${s.note}.`,
@@ -147,8 +153,8 @@ for (const s of schools) {
 <div><dt>핵심 특징</dt><dd>${esc(s.note)}</dd></div>${s.tags.length ? `<div><dt>특징 태그</dt><dd class="chips">${s.tags.map((t) => `<a class="chip tag" href="${r}tags/${t}/">${esc(TAG[t].name)}</a>`).join('')}</dd></div>` : ''}</dl>
 ${schoolDetail(s, r, q)}
 ${sameRegion.length ? `<section><h2 class="sec">${esc(g.name)}의 다른 국제학교</h2>${grid(r, sameRegion)}</section>` : ''}
-${sameCat.length ? `<section><h2 class="sec">같은 유형 · ${esc(c.short)}</h2>${grid(r, sameCat)}</section>` : ''}
-${sameCurr.length ? `<section><h2 class="sec">비슷한 커리큘럼을 운영하는 학교</h2>${grid(r, sameCurr)}</section>` : ''}
+<section><h2 class="sec">${esc(s.ko)}와 비슷한 학교</h2><p class="muted">커리큘럼·고등 과정·학년·학비·기숙사·지역·언어·특징을 비교한 매칭 점수입니다. <a href="${r}match/">조건으로 직접 찾기 →</a></p>
+<div class="matches">${topMatches(s, schools, profiles, AREA, 8).map((m) => `<a class="match" href="${r}schools/${m.school.slug}/"><span class="pct">${m.score}<small>%</small></span><span class="mbody"><strong>${esc(m.school.ko)}</strong><span class="muted">${esc(REG[m.school.region].name)} · ${esc(m.school.program)}</span><span class="why">${m.reasons.map((t) => `<em>${esc(t)}</em>`).join('')}</span></span></a>`).join('')}</div></section>
 ${cta(r)}`,
   });
 }
@@ -204,6 +210,27 @@ for (const g of guides) {
   page(path, { title: g.title, desc: g.lead, crumbs: [['guides/', '가이드'], [null, g.title]],
     body: head('Guide', g.title, g.lead) + table + `<div class="prose">${g.sections.map(([h, p]) => `<h2 class="sec">${esc(h)}</h2><p>${esc(p)}</p>`).join('')}</div>`
       + `<section><h2 class="sec">다른 가이드</h2><div class="guides">${guides.filter((x) => x !== g).map((x) => `<a class="guide" href="${r}guides/${x.slug}/"><strong>${esc(x.title)}</strong></a>`).join('')}</div></section>` + cta(r) });
+}
+
+// Matching tool: client-side scoring against embedded school data
+{
+  const data = schools.map((s) => ({ slug: s.slug, ko: s.ko, en: s.en, region: s.region, regionName: REG[s.region].name, area: AREA[s.region], program: s.program, curr: s.curr, tags: s.tags, fee: profiles[s.slug].fee, g: profiles[s.slug].g, langs: profiles[s.slug].langs, boarding: !!profiles[s.slug].boarding || s.tags.includes('boarding') }));
+  const opt = (pairs) => pairs.map(([v, t]) => `<option value="${v}">${esc(t)}</option>`).join('');
+  const grades = [[-2, '유아 (만 3~4세)'], [0, '유치 K (만 5세)'], ...Array.from({ length: 12 }, (_, i) => [i + 1, `G${i + 1} (한국 ${i < 6 ? `초${i + 1}` : i < 9 ? `중${i - 5}` : `고${i - 8}`} 상당)`])];
+  page('match/', { title: '우리 아이에게 맞는 일본 국제학교 매칭', desc: '학년·커리큘럼·지역·학비·기숙사·언어 조건으로 일본 국제학교 45곳의 일치율을 계산합니다.', crumbs: [[null, '학교 매칭']],
+    body: head('School Match', '우리 아이 맞춤 학교 매칭', '조건을 고르면 45개 학교의 일치율을 계산해 높은 순으로 보여줍니다. 조건을 바꾸면 바로 다시 계산됩니다.')
+      + `<form class="matcher" data-match onsubmit="return false">
+<label>자녀 입학 학년<select name="grade"><option value="">상관없음</option>${opt(grades)}</select></label>
+<label>원하는 고등 과정<select name="track"><option value="">상관없음</option>${opt([['ib-dp', 'IB DP'], ['ap', '미국식 + AP'], ['a-level', '영국식 A-Level'], ['korean', '한국 교육과정 (한국 대학)'], ['japanese', '일본 1조교 (일본 학력)'], ['french-bac', '프랑스 바칼로레아'], ['cbse', '인도 CBSE']])}</select></label>
+<label>지역<select name="region"><option value="">상관없음</option>${opt(regions.map((g) => [g.slug, `${g.name} (${g.area})`]))}</select></label>
+<label>연간 수업료 상한<select name="budget"><option value="">상관없음</option>${opt([[60, '60만 엔 이하'], [150, '150만 엔 이하'], [200, '200만 엔 이하'], [250, '250만 엔 이하'], [300, '300만 엔 이하'], [400, '400만 엔 이하']])}</select></label>
+<label>기숙사<select name="boarding"><option value="">상관없음</option><option value="yes">필요 (기숙·보딩)</option><option value="no">통학</option></select></label>
+<label>함께 키울 언어<select name="lang"><option value="">상관없음</option>${opt([['일본어', '일본어'], ['한국어', '한국어'], ['중국어', '중국어'], ['프랑스어', '프랑스어'], ['스페인어', '스페인어']])}</select></label>
+<label>자녀 성별<select name="sex"><option value="">상관없음</option><option value="m">남학생</option><option value="f">여학생</option></select></label>
+<label>중요한 점<select name="pref"><option value="">없음</option>${opt([['eal', '영어 지원(EAL) 강함'], ['korean', '한국 학생 친화'], ['small', '소규모 학급'], ['affordable', '학비 합리적'], ['historic', '전통 명문'], ['religious', '종교 교육 OK']])}</select></label>
+</form>
+<p class="muted" aria-live="polite" data-summary></p><div class="matches big" data-results></div>
+<script type="application/json" id="match-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>` });
 }
 
 // Contact

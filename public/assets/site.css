@@ -144,3 +144,36 @@ dl.more dd{margin:0;font-size:.92rem}
 .src{font-size:.8rem;color:var(--sub)}
 .src a{margin-right:2px}
 @media (max-width:760px){dl.more div{grid-template-columns:1fr;gap:2px}}
+
+/* 비전·학년 단계 */
+.vision{background:var(--ink);color:var(--paper);padding:22px 26px;border-radius:4px}
+.vision blockquote{margin:6px 0 12px;font:600 1.1rem/1.7 var(--serif)}
+.vision .chip{background:#33443c;color:var(--paper)}
+.vision .muted{color:#b9b3a6;font-size:.8rem;align-self:center}
+.stages{display:grid;gap:16px}
+.stage{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--red);padding:18px 22px}
+.stage header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 12px;margin-bottom:6px}
+.stage h3{margin:0;font-size:1.15rem}
+.stage .grade{font-weight:700;color:var(--moss)}
+.stage .prog{font-size:.78rem;font-weight:700;color:#fff;background:var(--moss);padding:2px 9px;border-radius:999px}
+.stage h4{margin:12px 0 4px;font:700 .78rem var(--sans);color:var(--red);letter-spacing:.06em}
+.stage p{margin:0;font-size:.94rem}
+.stage .goal{font-weight:500}
+.subj{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.subj li{font-size:.85rem;background:#efe7d6;padding:4px 10px;border-radius:3px}
+/* 매칭 */
+.matches{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}
+.match{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);padding:12px 14px;text-decoration:none}
+.match:hover{border-color:var(--red)}
+.match.hot{border-left:4px solid var(--red)}
+.pct{flex:none;width:58px;font:800 1.6rem/1 var(--serif);color:var(--red);text-align:center;padding-top:4px}
+.pct small{font-size:.8rem}
+.mbody{display:flex;flex-direction:column;gap:3px;min-width:0}
+.mbody .muted{font-size:.8rem}
+.why{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.why em{font-style:normal;font-size:.72rem;background:#e3ecdf;color:var(--moss);padding:1px 7px;border-radius:999px}
+.why em.no{background:#f6dfd8;color:var(--red-d)}
+.matcher{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0 8px}
+.matcher label{display:flex;flex-direction:column;font-size:.78rem;font-weight:700;color:var(--sub)}
+.matcher select{margin-top:4px;font:inherit;font-size:.92rem;padding:9px 8px;border:1px solid var(--ink);border-radius:3px;background:#fff;color:var(--ink);min-width:0}
+@media (max-width:760px){.matcher{grid-template-columns:1fr 1fr}.matches{grid-template-columns:1fr}}
