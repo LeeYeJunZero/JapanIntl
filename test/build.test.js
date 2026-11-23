@@ -37,3 +37,15 @@ test('every internal link resolves', () => {
     }
   }
 });
+
+test('every school has researched details', async () => {
+  const { details } = await import('../src/details.js');
+  const { curriculumMore } = await import('../src/curriculum-more.js');
+  for (const s of schools) {
+    const d = details[s.slug];
+    assert.ok(d, `no details: ${s.slug}`);
+    assert.ok(d.levels?.length && d.admission?.length && d.pathways?.list?.length && d.tuition && d.sources?.length, `incomplete: ${s.slug}`);
+  }
+  assert.deepEqual(Object.keys(details).sort(), schools.map((s) => s.slug).sort());
+  for (const c of curricula) assert.ok(curriculumMore[c.slug]?.length >= 4, `thin curriculum: ${c.slug}`);
+});

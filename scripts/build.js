@@ -3,6 +3,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { schools, categories, regions, curricula, tags } from '../src/data.js';
 import { guides } from '../src/guides.js';
+import { details } from '../src/details.js';
+import { curriculumMore } from '../src/curriculum-more.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CFG = JSON.parse(readFileSync(join(ROOT, 'site.config.json'), 'utf8'));
@@ -98,6 +100,35 @@ ${schools.map((s) => `<tr data-cat="${s.cat}" data-region="${s.region}" data-cur
 page('schools/', { title: `일본 국제학교 전체 목록 (${schools.length}곳)`, desc: '일본 국제학교 전체 목록을 유형·지역·커리큘럼·특징으로 필터링해 찾아보세요.', crumbs: [[null, '학교 전체']],
   body: head('All Schools', `일본 국제학교 전체 ${schools.length}곳`, '검색과 필터로 조건에 맞는 학교를 바로 찾을 수 있습니다.') + finder(R('schools/')) });
 
+const moreList = (k) => (curriculumMore[k] || []).map(([h, p]) => `<div><dt>${esc(h)}</dt><dd>${esc(p)}</dd></div>`).join('');
+const row = (k, v) => v ? `<tr><th scope="row">${esc(k)}</th><td>${esc(v)}</td></tr>` : '';
+function schoolDetail(s, r, q) {
+  const d = details[s.slug] || {};
+  const boarding = s.tags.includes('boarding');
+  const ul = (list) => `<ul class="check">${list.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  return `<section><h2 class="sec">학교 기본 정보</h2><div class="table-wrap"><table class="info"><tbody>
+${row('설립', d.founded)}${row('운영 학년', d.grades)}${row('규모', d.size)}${row('운영 과정', s.program)}${row('연간 학비', d.tuition)}${row('시험 성적', d.results)}
+${d.site ? `<tr><th scope="row">공식 사이트</th><td><a href="${esc(d.site)}" rel="noopener" target="_blank">${esc(d.site.replace(/^https?:\/\//, '').replace(/\/$/, ''))} ↗</a></td></tr>` : ''}
+</tbody></table></div></section>
+${d.levels ? `<section><h2 class="sec">학년별 커리큘럼</h2><ol class="levels">${d.levels.map(([h, p]) => `<li><strong>${esc(h)}</strong><p>${esc(p)}</p></li>`).join('')}</ol></section>` : ''}
+<section><h2 class="sec">운영 커리큘럼 상세</h2><div class="curr-list">${s.curr.map((k, i) => { const u = CUR[k]; return `<details class="curr"${i ? '' : ' open'}><summary><h3><a href="${r}curriculum/${k}/">${esc(u.name)}</a> <span class="muted">${esc(u.full)} · ${esc(u.age)}</span></h3></summary>${u.about.map((p) => `<p>${esc(p)}</p>`).join('')}<dl class="more">${moreList(k)}</dl></details>`; }).join('')}</div></section>
+<section><h2 class="sec">입학 · 지원 상세</h2><div class="apply">
+<div><h3>모집 · 입학 평가</h3>${ul(d.admission || ['모집 학년·일정은 학교 입학처에 확인하세요.'])}</div>
+<div><h3>영어 지원 (EAL)</h3><p>${esc(d.eal || (s.tags.includes('eal') ? 'EAL 지원 체계가 강점인 학교입니다.' : 'EAL 운영 여부와 수용 학년은 학교에 확인하세요. 고학년일수록 영어 요구 수준이 높습니다.'))}</p></div>
+<div><h3>${boarding ? '기숙사 · 통학' : '통학 · 스쿨버스'}</h3><p>${esc(d.bus || (boarding ? '기숙사 운영 학교입니다. 정원·비용·주말/방학 운영을 확인하세요.' : '스쿨버스 노선과 통학 시간을 확인하세요.'))}</p></div>
+<div><h3>학비</h3><p>${esc(d.tuition || '학교 입학처에 확인하세요.')}</p><p class="muted">수업료 외 입학금·시설비·건축기금·버스·급식비가 별도인 경우가 많습니다.</p></div>
+</div></section>
+<section><h2 class="sec">${esc(d.pathways?.label || '진학 경로')}</h2>${d.pathways ? `<div class="chips path">${d.pathways.list.map((x) => `<span class="chip">${esc(x)}</span>`).join('')}</div><p class="muted">${esc(d.pathways.note || '')}</p>` : '<p class="muted">진학 실적은 학교에 요청하세요.</p>'}</section>
+<section><h2 class="sec">지원 전 최종 체크</h2>${ul([
+    '올해 모집 학년과 지원 마감일, 대기자(Waitlist) 현황',
+    `입학 평가 과목과 인터뷰 언어${d.admission ? ' (위 입학 정보와 최신 요강 대조)' : ''}`,
+    s.curr.includes('ib-dp') ? 'IB DP 개설 과목(HL/SL)과 최근 평균 점수' : s.curr.includes('ap') ? '개설 AP 과목 목록과 수강 조건' : s.curr.includes('a-level') ? 'A-Level 개설 과목과 과목 조합 제한' : '상급 학교(다음 단계) 진학 계획',
+    '연간 총비용 (수업료 + 일회성 비용 + 버스·급식·기숙사)',
+  ])}
+<p class="btns">${d.site ? `<a class="btn" href="${esc(d.site)}" rel="noopener" target="_blank">공식 사이트 ↗</a>` : ''}<a class="btn ghost" href="https://www.google.com/search?q=${q}" rel="noopener" target="_blank">입학 정보 검색 ↗</a></p>
+${d.sources ? `<p class="src">출처: ${d.sources.map((u, i) => `<a href="${esc(u)}" rel="noopener" target="_blank">[${i + 1}]</a>`).join(' ')} · 2026년 11월 조사 기준, 학비·요강은 매년 바뀝니다.</p>` : ''}</section>`;
+}
+
 // School detail pages
 for (const s of schools) {
   const path = `schools/${s.slug}/`, r = R(path), c = CAT[s.cat], g = REG[s.region];
@@ -114,14 +145,7 @@ for (const s of schools) {
 <dl class="facts"><div><dt>소재지</dt><dd><a href="${r}region/${g.slug}/">${esc(g.name)}</a> · ${esc(s.area)} <span class="muted">(${esc(g.area)})</span></dd></div>
 <div><dt>운영 과정</dt><dd>${esc(s.program)}</dd></div><div><dt>유형</dt><dd><a href="${r}category/${c.slug}/">${esc(c.name)}</a></dd></div>
 <div><dt>핵심 특징</dt><dd>${esc(s.note)}</dd></div>${s.tags.length ? `<div><dt>특징 태그</dt><dd class="chips">${s.tags.map((t) => `<a class="chip tag" href="${r}tags/${t}/">${esc(TAG[t].name)}</a>`).join('')}</dd></div>` : ''}</dl>
-<section><h2 class="sec">이 학교의 커리큘럼</h2><div class="curr-list">${s.curr.map((k) => { const u = CUR[k]; return `<article class="curr"><h3><a href="${r}curriculum/${k}/">${esc(u.name)}</a> <span class="muted">${esc(u.full)} · ${esc(u.age)}</span></h3><p>${esc(u.about[0])}</p></article>`; }).join('')}</div></section>
-<section><h2 class="sec">지원 전 확인할 것</h2><ul class="check">
-<li>올해 모집 학년과 지원 마감일, 대기자(Waitlist) 현황</li><li>입학 평가 과목(영어·수학)과 인터뷰 언어</li>
-<li>${s.tags.includes('eal') ? 'EAL 지원 범위와 수용 학년' : 'EAL(영어 보충) 지원 여부와 수용 학년'}</li>
-<li>${s.tags.includes('boarding') ? '기숙사 정원·비용·주말/방학 운영' : '스쿨버스 노선과 통학 시간'}</li>
-<li>수업료 외 입학금·시설비·기부금 등 연간 총비용</li>
-<li>${s.curr.includes('ib-dp') ? 'IB DP 개설 과목(HL/SL)과 최근 평균 점수' : s.curr.includes('ap') ? '개설 AP 과목 목록' : '상급 학교 진학 경로'}</li></ul>
-<p><a class="btn ghost" href="https://www.google.com/search?q=${q}" rel="noopener" target="_blank">공식 사이트 검색 ↗</a></p></section>
+${schoolDetail(s, r, q)}
 ${sameRegion.length ? `<section><h2 class="sec">${esc(g.name)}의 다른 국제학교</h2>${grid(r, sameRegion)}</section>` : ''}
 ${sameCat.length ? `<section><h2 class="sec">같은 유형 · ${esc(c.short)}</h2>${grid(r, sameCat)}</section>` : ''}
 ${sameCurr.length ? `<section><h2 class="sec">비슷한 커리큘럼을 운영하는 학교</h2>${grid(r, sameCurr)}</section>` : ''}
@@ -158,7 +182,7 @@ page('curriculum/', { title: '국제학교 커리큘럼 총정리 — IB·AP·A-
 for (const u of curricula) {
   const path = `curriculum/${u.slug}/`, r = R(path), list = schools.filter((s) => s.curr.includes(u.slug));
   page(path, { title: `${u.name}란? 일본에서 ${u.name} 운영 국제학교 ${list.length}곳`, desc: `${u.name}(${u.full}) 설명과 일본 내 운영 학교 ${list.length}곳.`, crumbs: [['curriculum/', '커리큘럼'], [null, u.name]],
-    body: head(`${u.full} · ${u.age}`, u.name, null) + `<div class="prose">${u.about.map((p) => `<p>${esc(p)}</p>`).join('')}<h2 class="sec">학습 포인트</h2><ul class="check">${u.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`
+    body: head(`${u.full} · ${u.age}`, u.name, null) + `<div class="prose">${u.about.map((p) => `<p>${esc(p)}</p>`).join('')}<h2 class="sec">세부 구성</h2><dl class="more">${moreList(u.slug)}</dl><h2 class="sec">학습 포인트</h2><ul class="check">${u.tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`
       + `<section><h2 class="sec">${esc(u.name)} 운영 학교 ${list.length}곳</h2>${grid(r, list)}</section>` + cta(r) });
 }
 
